@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body { font-family: Arial, sans-serif; color: #171717; }
+    .container { background: #ffffff; padding: 20px; border-radius: 8px; }
+    .header { font-size: 1.25rem; margin-bottom: 24px; color:#16d995 }
+    .message { white-space: pre-wrap; padding: 24px 12px; background-color: #e5e5e5; color: #414141;}
+    .footer { font-size: 1.25rem; color: #383838; margin-top: 24px; }
+    .margin-top{margin-top: 64px;}
+    .text {
+      font-size: 1.25rem; margin: 16px 0px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">Nachricht erfolgreich erhalten | Message Received Successfully 📬</div>
+    <div class="text">Vielen Dank für deine Kontaktaufnahme. Ich habe deine Nachricht erhalten und werde mich so bald wie möglich bei dir melden.<br><br>Mit freundlichen Grüßen,<br>Marcel Arndt<br><br></div>
+    <div class="text">Thank you for contacting me. I have received your message and will get back to you as soon as possible.<br><br>Best regards,<br>Marcel Arndt<br><br></div>
+    <div class="text margin-top">Deine Nachricht | Your message:</div>
+    <div class="message">{{message}}</div>
+  </div>
+</body>
+</html>

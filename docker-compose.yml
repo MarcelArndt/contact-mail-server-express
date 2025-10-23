@@ -1,0 +1,10 @@
+version: "3.9"
+services:
+  contact-service:
+    build: .
+    container_name: contact-service
+    ports:
+      - "5796:3000"
+    env_file:
+      - .env
+    restart: always
