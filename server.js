@@ -63,7 +63,7 @@ async function sendMailToMe(name, email, message){
       name,
       email,
       message,
-      website: "https://arndt-marcel.de",
+      website:  process.env.ORIGIN_WEBSEITE_URL,
     },
   });
 }
