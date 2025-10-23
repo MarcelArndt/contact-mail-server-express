@@ -10,8 +10,28 @@ import { fileURLToPath } from "url";
 
 dotenv.config();
 const app = express();
+
+
+const allowedOrigins = process.env.CORS_ALLOWED_URLS? process.env.CORS_ALLOWED_URLS.split(',').map(url => url.trim()).filter(Boolean) : [];
+
+app.use(cors({
+  origin: (origin, callback) => {
+    
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    } else {
+      return callback(new Error(`CORS blockiert Anfrage von: ${origin}`));
+    }
+  },
+  methods: ['POST', 'OPTIONS'],
+  allowedHeaders: ['Content-Type'],
+  credentials: true,
+  optionsSuccessStatus: 200
+}));
+
 app.use(express.json());
-app.use(cors());
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
