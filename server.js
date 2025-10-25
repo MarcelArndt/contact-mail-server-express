@@ -16,9 +16,6 @@ const allowedOrigins = process.env.CORS_ALLOWED_URLS? process.env.CORS_ALLOWED_U
 
 app.use(cors({
   origin: (origin, callback) => {
-    
-    if (!origin) return callback(null, true);
-    
     if (allowedOrigins.includes(origin)) {
       return callback(null, true);
     } else {
