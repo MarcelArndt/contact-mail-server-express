@@ -8,8 +8,15 @@ import path from "path";
 import { fileURLToPath } from "url";
 
 
+import rateLimit from "express-rate-limit";
+
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 dotenv.config();
 const app = express();
+
+const limiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 5 });
+app.use("/send-mail", limiter);
 
 
 const allowedOrigins = process.env.CORS_ALLOWED_URLS? process.env.CORS_ALLOWED_URLS.split(',').map(url => url.trim()).filter(Boolean) : [];
@@ -54,47 +61,86 @@ transporter.use("compile", hbs({
   extName: ".hbs",
 }));
 
+
 app.post("/send-mail", async (req, res) => {
-  const { name, email, message } = req.body;
+  const { name, email, message, firstname, lastname, subject } = req.body;
   try {
-    await writeMails(name, email, message);
+    const validated = validateData({ name, email, message, firstname, lastname, subject });
+    await writeMails(validated.name, validated.email, validated.message, validated.subject);
     res.status(200).json({ success: true });
   } catch (err) {
+    if (err.isValidation) {
+      return res.status(400).json({ success: false, error: err.message });
+    }
     console.error(err);
     res.status(500).json({ success: false, error: err.message });
   }
 });
 
-async function writeMails(name, email, message) {
-  await sendMailToMe(name, email, message);
-  await sendFeedbackEmail(name, email, message);
+
+function validateData({ name, email, message, firstname, lastname, subject }) {
+
+  let resolvedName = name?.trim();
+  if (!resolvedName) {
+    const first = firstname?.trim();
+    const last = lastname?.trim();
+    if (first && last) {
+      resolvedName = `${first} ${last}`;
+    } else {
+      throw Object.assign(new Error("Ein Name muss angegeben sein."), { isValidation: true });
+    }
+  }
+
+  let resolvedMessage = message?.trim();
+  if (!resolvedMessage) {
+    throw Object.assign(new Error("Eine Nachricht muss angegeben sein."), { isValidation: true });
+  }
+
+  const resolvedSubject = subject?.trim()
+  if(!resolvedSubject){
+     throw Object.assign(new Error("Ein Betreff muss angegeben sein."), { isValidation: true });
+  }
+
+  if (!emailRegex.test(email)) {
+    throw Object.assign(new Error("Keine gültige E-Mail Adresse."), { isValidation: true });
+  }
+
+  return { name: resolvedName, email, message: resolvedMessage , subject: resolvedSubject};
 }
 
-async function sendMailToMe(name, email, message){
+
+async function writeMails(name, email, message, subject) {
+  await sendMailToMe(name, email, message, subject);
+  await sendFeedbackEmail(name, email, message, subject);
+}
+
+async function sendMailToMe(name, email, message, subject){
   await transporter.sendMail({
     from: `"${name}" <${email}>`,
     to: process.env.EMAIL_HOST_USER,
-    subject: `Neue Kontaktanfrage von ${name}`,
+    subject: `Neue Kontaktanfrage von ${name} | ${subject}`,
     template: "contact",
     context: {
       name,
       email,
       message,
+      subject,
       website:  process.env.ORIGIN_WEBSEITE_URL,
     },
   });
 }
 
-async function sendFeedbackEmail(name, email, message){
+async function sendFeedbackEmail(name, email, message, subject){
   await transporter.sendMail({
       from: `"Marcel Arndt - No Reply" <${process.env.EMAIL_HOST_USER}>`,
       to: email,
-      subject: `I have received your message`,
+      subject: `I have received your message | ${subject}`,
       template: "feedback-email",
       context: {
         name,
         email,
         message,
+        subject,
       },
     });
 }
